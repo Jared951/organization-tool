@@ -28,17 +28,18 @@ class Task(db.Model):
     name = db.Column(db.String(255), nullable=False)
     company = db.Column(db.String(255), nullable=False)
     due_date = db.Column(db.Date) 
-    due_datetime = db.Column(db.DateTime)
-    notes = db.Column(db.Text)
+    due_time = db.Column(db.Time)
+    notes = db.Column(db.String(255))
 
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    def __init__(self, name, company, due_date, due_datetime, notes):
+    def __init__(self, name, company, due_date, due_time, notes, user_id):
         self.name = name
         self.company = company
         self.due_date = due_date
-        self.due_datetime = due_datetime
+        self.due_time = due_time
         self.notes = notes
+        self.user_id = user_id
 
 def connect_to_db(app):
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["POSTGRES_URI"]
@@ -50,8 +51,4 @@ if __name__ == "__main__":
     from flask import Flask
     app = Flask(__name__)
     connect_to_db(app)
-    
-    with app.app_context():
-        db.create_all()  # Create database tables if they don't exist yet
-    
     print("Connected to db...")
