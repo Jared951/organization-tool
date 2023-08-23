@@ -1,5 +1,6 @@
 import os
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
@@ -9,16 +10,16 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
-    password = db.Column(db.String(255))
+    password_hash = db.Column(db.String(128))
 
     tasks = db.relationship("Task", backref="user", lazy=True)
 
     def __init__(self, email, password):
         self.email = email
-        self.password = password
+        self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return self.password == password 
+        return check_password_hash(self.password_hash, password) 
 
 class Task(db.Model):
 
