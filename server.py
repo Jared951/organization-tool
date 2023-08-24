@@ -1,8 +1,8 @@
-from flask import Flask, render_template, redirect, url_for, flash, current_app
-from flask_login import LoginManager, login_required, login_user, logout_user
-from model import db, connect_to_db, User
+from flask import Flask, render_template, redirect, url_for, flash, current_app, request, jsonify
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
+from model import db, connect_to_db, User, Task
 from forms import RegistrationForm, LoginForm
-from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 import secrets
 
 app = Flask(__name__)
@@ -66,6 +66,26 @@ def logout():
 @login_required
 def home():
     return render_template('home.html')
+
+@app.route('/get_events')
+def get_events():
+    if not current_user.is_authenticated:
+        return jsonify([])
+
+    user_id = current_user.id
+    events = Task.query.filter_by(user_id=user_id).all()
+
+    event_list = []
+    for event in events:
+        event_list.append({
+            'title': event.name,
+            'start': datetime.combine(event.due_date, event.due_time).isoformat(),
+            'extendedProps': {
+                'company': event.company,
+                'notes': event.notes
+            }
+        })
+    return jsonify(event_list)
 
 if __name__ == "__main__":
     app.run(debug=True)

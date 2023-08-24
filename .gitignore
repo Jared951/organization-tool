@@ -1,3 +1,5 @@
 config.sh
 
 /env
+
+node_modules
