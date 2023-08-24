@@ -10,10 +10,10 @@ app.config['SECRET_KEY'] = secrets.token_hex(16)
 connect_to_db(app)
 
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'login' #type: ignore
 
 @login_manager.user_loader
-def load_user(user_id):
+def load_user(user_id): #type: ignore
     return User.query.get(int(user_id))
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -67,25 +67,24 @@ def logout():
 def home():
     return render_template('home.html')
 
-@app.route('/get_events')
-def get_events():
-    if not current_user.is_authenticated:
-        return jsonify([])
+@app.route('/create_task', methods=['GET', 'POST'])
+@login_required
+def create_task():
+    task_name = request.form['task_name']
+    company = request.form['company']
+    due_date = request.form['due_date']
+    due_time = request.form['due_time']
+    notes = request.form['notes']
 
-    user_id = current_user.id
-    events = Task.query.filter_by(user_id=user_id).all()
+    # Create a Task object associated with the current user
+    task = Task(name=task_name, company=company, due_date=due_date, due_time=due_time, notes=notes, user_id=current_user.id) 
+        
+    with app.app_context():
+        db.session.add(task)
+        db.session.commit()
 
-    event_list = []
-    for event in events:
-        event_list.append({
-            'title': event.name,
-            'start': datetime.combine(event.due_date, event.due_time).isoformat(),
-            'extendedProps': {
-                'company': event.company,
-                'notes': event.notes
-            }
-        })
-    return jsonify(event_list)
+        flash('Task added successfully!', 'success')
+        return redirect(url_for('home'))
 
 if __name__ == "__main__":
     app.run(debug=True)
