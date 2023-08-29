@@ -51,6 +51,45 @@
         </div>
       </div>
     </div>
+
+    <div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="updateTaskModalLabel">Update Task</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="update-task-form">
+              <input type="hidden" id="event-id-update" value=""> <!-- Hidden input to store event ID -->
+  
+              <div class="mb-3">
+                <label for="update-task-name" class="form-label">Task Name</label>
+                <input type="text" class="form-control" id="update-task-name" required>
+              </div>
+              <div class="mb-3">
+                <label for="update-task-company" class="form-label">Company</label>
+                <input type="text" class="form-control" id="update-task-company">
+              </div>
+              <div class="mb-3">
+                <label for="update-task-due-date" class="form-label">Due Date</label>
+                <input type="date" class="form-control" id="update-task-due-date" required>
+              </div>
+              <div class="mb-3">
+                <label for="update-task-due-time" class="form-label">Due Time</label>
+                <input type="time" class="form-control" id="update-task-due-time" required>
+              </div>
+              <div class="mb-3">
+                <label for="update-task-notes" class="form-label">Notes</label>
+                <textarea class="form-control" id="update-task-notes" rows="3"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">Update Task</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="/static/app.js"></script>
   </body>
 </html>

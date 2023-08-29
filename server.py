@@ -70,11 +70,13 @@ def home():
 @app.route('/create_task', methods=['GET', 'POST'])
 @login_required
 def create_task():
-    task_name = request.form['task_name']
-    company = request.form['company']
-    due_date = request.form['due_date']
-    due_time = request.form['due_time']
-    notes = request.form['notes']
+    data = request.get_json()
+
+    task_name = data.get('task_name')
+    company = data.get('company')
+    due_date = data.get('due_date')
+    due_time = data.get('due_time')
+    notes = data.get('notes')
 
     # Create a Task object associated with the current user
     task = Task(name=task_name, company=company, due_date=due_date, due_time=due_time, notes=notes, user_id=current_user.id) 
@@ -85,6 +87,51 @@ def create_task():
 
         flash('Task added successfully!', 'success')
         return redirect(url_for('home'))
+
+@app.route('/get_events')
+@login_required
+def get_events():
+    user_id = current_user.id
+    user_tasks = Task.query.filter_by(user_id=user_id).all()
+
+    events = []
+
+    for task in user_tasks:
+        due_datetime = datetime.combine(task.due_date, task.due_time)
+        event = {
+            'title': task.name,
+            'start': due_datetime.strftime('%Y-%m-%dT%H:%M:%S'),  # Format to ISO 8601
+            # Add other event properties as needed
+        }
+        events.append(event)
+
+    return jsonify(events)
+
+@app.route('/update_task', methods=['POST'])
+@login_required
+def update_task():
+    data = request.get_json()
+
+    task_id = data.get('task_id')
+    task_name = data.get('task_name')
+    company = data.get('company')
+    due_date = data.get('due_date')
+    due_time = data.get('due_time')
+    notes = data.get('notes')
+
+    task = Task.query.get(task_id)
+    if task:
+        task.name = task_name
+        task.company = company
+        task.due_date = due_date
+        task.due_time = due_time
+        task.notes = notes
+
+        db.session.commit()
+
+        return jsonify({'message': 'Task updated successfully'})
+    else:
+        return jsonify({'error': 'Task not found'}), 404
 
 if __name__ == "__main__":
     app.run(debug=True)

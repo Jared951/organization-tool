@@ -2,7 +2,20 @@ document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('calendar');
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
-    events: [], // Initialize with empty events array
+    events: '/get_events', // Fetch events from the server
+    eventClick: function(info) {
+      // Get the event object from the clicked event
+      const event = info.event;
+
+      // Populate the update modal with event details
+      document.getElementById('event-id').value = event.id;
+      document.getElementById('update-task-name').value = event.title;
+      document.getElementById('update-task-company').value = event.extendedProps.company;
+      // ... similarly populate other fields ...
+
+      // Show the update modal
+      $('#updateTaskModal').modal('show');
+    },
     // ... other options ...
   });
   calendar.render();
@@ -14,10 +27,9 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Handle form submission when the task form is submitted
-  document.getElementById('task-form').addEventListener('submit', function(event) {
+  document.getElementById('task-form').addEventListener('submit', async function(event) {
     event.preventDefault();
 
-    // Capture user input from the form
     const taskName = document.getElementById('task-name').value;
     const company = document.getElementById('task-company').value;
     const dueDate = document.getElementById('task-due-date').value;
@@ -34,65 +46,124 @@ document.addEventListener('DOMContentLoaded', function() {
     dueDateObj.setHours(hours);
     dueDateObj.setMinutes(minutes);
 
-    // Create an event object
-    const eventObj = {
-      title: taskName,
-      start: dueDateObj,
-      end: dueDateObj, // For simplicity, set end to the same as start
-      extendedProps: {
-        company: company,
-        notes: notes
-      }
+    // Create a data object with the form values
+    const formData = {
+      task_name: taskName,
+      company: company,
+      due_date: dueDate,
+      due_time: dueTime,
+      notes: notes
     };
 
-    // Add the event to the calendar
-    calendar.addEvent(eventObj);
+    try {
+      // Send a POST request to the server to add the task
+      const response = await fetch('/create_task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
 
-    // Clear the form and hide the modal
-    document.getElementById('task-form').reset();
-    $('#taskModal').modal('hide');
-  });
-});
+      if (response.ok) {
+        console.log('Task added successfully');
 
-// Handle form submission when the task form is submitted
-document.getElementById('task-form').addEventListener('submit', async function(event) {
-  event.preventDefault();
+        // Create an event object for the new task
+        const newEvent = {
+          title: taskName,
+          start: dueDateObj,
+          end: dueDateObj, // For simplicity, set end to the same as start
+          extendedProps: {
+            company: company,
+            notes: notes
+          }
+        };
 
-  const taskName = document.getElementById('task-name').value;
-  const company = document.getElementById('task-company').value;
-  const dueDate = document.getElementById('task-due-date').value;
-  const dueTime = document.getElementById('task-due-time').value;
-  const notes = document.getElementById('task-notes').value;
+        // Add the new event to the calendar's events source
+        calendar.addEvent(newEvent);
 
-  // Create a data object with the form values
-  const formData = {
-    task_name: taskName,
-    company: company,
-    due_date: dueDate,
-    due_time: dueTime,
-    notes: notes
-  };
+        console.log('Calendar Events after adding:', calendar.getEvents());
 
-  try {
-    // Send a POST request to the server to add the task
-    const response = await fetch('/static/create_task', { // Update the URL to reflect the correct path
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    });
+        // Refresh events on the calendar to display the new event
+        calendar.refetchEvents();
 
-    if (response.ok) {
-      // Task added successfully, reload the calendar to show the updated events
-      calendar.refetchEvents();
-      // Clear the form and hide the modal
-      document.getElementById('task-form').reset();
-      $('#taskModal').modal('hide');
-    } else {
-      console.error('Error adding task:', response.status, response.statusText);
+        // Clear the form and hide the modal
+        document.getElementById('task-form').reset();
+        $('#taskModal').modal('hide');
+      } else {
+        console.error('Error adding task:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error adding task:', error);
     }
-  } catch (error) {
-    console.error('Error adding task:', error);
-  }
-});
+  });
+
+  // Handle form submission when the update task form is submitted
+  document.getElementById('update-task-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+
+    const taskName = document.getElementById('update-task-name').value; // Corrected ID
+    const company = document.getElementById('update-task-company').value; // Corrected ID
+    const dueDate = document.getElementById('update-task-due-date').value; // Corrected ID
+    const dueTime = document.getElementById('update-task-due-time').value; // Corrected ID
+    const notes = document.getElementById('update-task-notes').value; // Corrected ID
+
+    // Get the task_id from the clicked event
+    const taskId = document.getElementById('event-id-update').value; // Corrected ID
+
+    const formData = {
+      task_id: taskId,
+      task_name: taskName,
+      company: company,
+      due_date: dueDate,
+      due_time: dueTime,
+      notes: notes
+    };
+
+    try {
+      const response = await fetch('/update_task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        console.log('Task updated successfully');
+        // Reload the events on the calendar after updating
+        calendar.refetchEvents();
+        // Clear the form and hide the modal
+        document.getElementById('update-task-form').reset();
+        $('#updateTaskModal').modal('hide');
+      } else {
+        console.error('Error updating task:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  });
+
+  document.getElementById('calendar').addEventListener('click', (info) => {
+    if (info.event) {
+      const clickedEvent = info.event; // Get the clicked event object
+      const taskId = clickedEvent.id; // Get the task_id from the event object
+      const taskName = clickedEvent.title;
+      const company = clickedEvent.extendedProps.company;
+      const dueDate = clickedEvent.start.toISOString().substr(0, 10);
+      const dueTime = clickedEvent.start.toISOString().substr(11, 5);
+      const notes = clickedEvent.extendedProps.notes;
+
+      // Set the form fields with the task information
+      document.getElementById('update-task-name').value = taskName;
+      document.getElementById('update-task-company').value = company;
+      document.getElementById('update-task-due-date').value = dueDate;
+      document.getElementById('update-task-due-time').value = dueTime;
+      document.getElementById('update-task-notes').value = notes;
+      document.getElementById('event-id-update').value = taskId;
+
+      // Show the update task modal
+      $('#updateTaskModal').modal('show');
+    }
+  });
+})
