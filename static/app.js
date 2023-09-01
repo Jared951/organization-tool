@@ -102,14 +102,14 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('update-task-form').addEventListener('submit', async function(event) {
     event.preventDefault();
 
-    const taskName = document.getElementById('update-task-name').value; // Corrected ID
-    const company = document.getElementById('update-task-company').value; // Corrected ID
-    const dueDate = document.getElementById('update-task-due-date').value; // Corrected ID
-    const dueTime = document.getElementById('update-task-due-time').value; // Corrected ID
-    const notes = document.getElementById('update-task-notes').value; // Corrected ID
+    const taskName = document.getElementById('update-task-name').value; 
+    const company = document.getElementById('update-task-company').value; 
+    const dueDate = document.getElementById('update-task-due-date').value; 
+    const dueTime = document.getElementById('update-task-due-time').value; 
+    const notes = document.getElementById('update-task-notes').value; 
 
     // Get the task_id from the clicked event
-    const taskId = document.getElementById('event-id-update').value; // Corrected ID
+    const taskId = document.getElementById('event-id').value; 
 
     const formData = {
       task_id: taskId,
@@ -128,6 +128,14 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         body: JSON.stringify(formData)
       });
+
+      const taskId = parseInt(document.getElementById('event-id').value, 10);
+      if (!isNaN(taskId)) {
+        // Now you can use taskId in the formData and request.
+      } else {
+        console.error('Invalid task ID:', taskId);
+        // Handle the error appropriately.
+      }
 
       if (response.ok) {
         console.log('Task updated successfully');

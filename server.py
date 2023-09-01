@@ -113,6 +113,8 @@ def update_task():
     data = request.get_json()
 
     task_id = data.get('task_id')
+    print('Received task_id:', task_id)
+    
     task_name = data.get('task_name')
     company = data.get('company')
     due_date = data.get('due_date')
@@ -120,6 +122,7 @@ def update_task():
     notes = data.get('notes')
 
     task = Task.query.get(task_id)
+
     if task:
         task.name = task_name
         task.company = company
@@ -127,7 +130,9 @@ def update_task():
         task.due_time = due_time
         task.notes = notes
 
-        db.session.commit()
+        with app.app_context():
+            db.session.add(task)
+            db.session.commit()
 
         return jsonify({'message': 'Task updated successfully'})
     else:
